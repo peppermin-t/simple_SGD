@@ -49,7 +49,7 @@ forward <- function(nn, inp) {
   h[[1]] <- inp
 
   # Loop over each remaining layer
-  for (i in range(1:length(h) - 1)) {
+  for (i in range(1: (length(h) - 1))) {
     h[[i + 1]] <- W[[i]] * h[[i]] + b[[i]]
   }
 
@@ -174,7 +174,8 @@ test <- function(nn, inp, k) {
     # Extract node values using transformation (ReLU)
     output_h <- forward(nn, inp[i, ])$h[[l]]
 
-    # Compute the probability that the output variable is labelled k / in output class k
+    # Compute the probability that the output variable is
+    #   labelled k / in output class k
     scores <- exp(output_h) / sum(exp(output_h))
 
     # Find the most frequently appeared probability
@@ -191,7 +192,8 @@ test <- function(nn, inp, k) {
 }
 
 # ! iris  # Sepal.Length, Sepal.Width, Petal.Length, Petal.Width, Species
-# Aim: Train a network to classify irises to species based on given characteristics
+# Aim: Train a network to classify irises to species based on given
+#   characteristics
 
 # k <- 4 # output class
 
