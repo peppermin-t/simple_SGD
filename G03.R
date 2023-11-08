@@ -52,18 +52,10 @@ forward <- function(nn, inp) {
   # Store values for the first layer
   nn$h[[1]] <- inp
   
-  
-  
+
   
   list(updated_nn)
 }
-
-Lh <- function(h, k) {
-  raw <- exp(h) / sum(exp(h))
-  raw[k] <- raw[k] - 1
-  raw
-}
-
 
 # A function to compute the derivatives of the loss for a network
 # Input: nn (a list of network returned from forward()) and k (output class)
@@ -107,9 +99,71 @@ backward <- function(nn, k) {
 # mb (number of randomly sampled data to compute gradient), 
 # nstep (number of optimization steps to take)
 train <- function(nn, inp, k, eta=.01, mb=10, nstep=10000){
-  #???????????
+  n <- length(inp)
+  for (i in 1: nstep) {
+    iid <- sample(n, mb)
+    sub_inp <- inp[iid]
+    sub_k <- k[iid]
+
+    grads <- c() # shall I use matrix calculation for this?
+    for (i in 1: mb) {  # use apply?
+      nn <- forward(nn, sub_inp)  # n data runs parallel ? No
+      grads <- c(grads, backward(nn, sub_k))  # n data runs parallel ? No
+    }
+
+    l <- length(nn$h)
+    for (i in 1: l) {
+      nn$W[[i]] <- nn$W[[i]] - eta * mean(grads)$dW
+      nn$b[[i]] <- nn$b[[i]] - eta * mean(grads)$db
+    }
+  }
+
+  nn
 }
 
+test <- function(nn, inp, k) {
+  n <- length(k)
+  l <- length(nn$h)
+  mis_class <- 0
+  for (i in 1: n) {
+    output_h <- forward(nn, inp[i, ])$h[[l]]
+    scores <- exp(output_h) / sum(exp(output_h))
+    k_ <- which(scores == max(scores))
+    if (k_ != k[i]) {
+      mis_class <- mis_class + 1
+    }
+  }
+
+  mis_class / n
+}
+
+# iris  # Sepal.Length, Sepal.Width, Petal.Length, Petal.Width, Species
+
+d <- c(4, 8, 7, 3)
+nn <- netup(d)
+
+# data preparation
+features <- c("Sepal.Length", "Sepal.Width", "Petal.Length", "Petal.Width")
+label <- c("Species")
+label_options <- c("setosa", "versicolor", "virginica")
+
+inp <- as.matrix(iris[, features])
+k <- as.integer(factor(iris[, label], level=label_options))
+
+test_iid <- seq(5, nrow(iris), by=5)
+inp_train <- inp[-test_iid]
+k_train <- k[-test_iid]
+inp_test <- inp[test_iid]
+k_test <- k[test_iid]
+
+# training
+nn <- train(nn, inp_train, k_train)
+
+# testing
+# Classify test data to species according to the class predicted
+# ?? plot
+# Compute misclassification rate
+mis_class_rate <- test(nn, inp_test, k_test)
 
 # Aim: Train a network to classify irises to species based on given characteristics
 # d <- c(4,8,7,3) # network
@@ -120,7 +174,3 @@ train <- function(nn, inp, k, eta=.01, mb=10, nstep=10000){
 # - The rest is training data
 # train_data <- iris[-seq(5, nrow(iris), by = 5),]
 # set.seed() # training has worked
-
-# Classify test data to species according to the class predicted
-# ?? plot
-# Compute misclassification rate
