@@ -50,12 +50,12 @@ forward <- function(nn, inp) {
 
   # Loop over each remaining layer
   for (i in 1:(length(h)-1)) {
-    
+
     # Compute transformation to obtain node values
-    h[[i+1]] <- drop(W[[i]] %*% h[[i]] + b[[i]])
-    
+    h[[i + 1]] <- drop(W[[i]] %*% h[[i]] + b[[i]])
+
     # Set equal to zero if element is negative
-    h[[i+1]][which(h[[i+1]] < 0)] <- 0
+    h[[i + 1]][which(h[[i + 1]] < 0)] <- 0
 
   }
 
@@ -87,7 +87,7 @@ backward <- function(nn, k) {
 
   ## Apply chain rule to compute derivatives of loss
   # Loop over each layer from the last layer (back-propagation)
-  for (i in (n - 1):1) {
+  for (i in (n - 1): 1) {
     # Store the node values at each layer
     d <- dh[[i + 1]]
 
