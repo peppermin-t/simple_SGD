@@ -74,7 +74,7 @@ backward <- function(nn, k) {
 
   # Compute the probability that the output variable is in class k
   # ?When index of node is not equal to that at each iteration
-  dh[[n]] <- exp(h[n]) / sum(exp(h)) # ?? maybe h[[n]]
+  dh[[n]] <- exp(h[[n]]) / sum(exp(h[[n]]))
 
   # ?When index of node is equal to that at each iteration
   dh[[n]][k] <- dh[[n]][k] - 1
@@ -89,13 +89,13 @@ backward <- function(nn, k) {
     d[which(h[[i + 1]] <= 0)] <- 0
 
     # Compute derivative w.r.t. the nodes (dh)
-    dh[[i]] <- t(W[i]) %*% d
+    dh[[i]] <- t(W[[i]]) %*% d
 
     # Compute derivative w.r.t. the offsets (db)
     db[[i]] <- d
 
     # Compute derivative w.r.t. the weights (dW)
-    dW[[i]] <- d %*% h[i]
+    dW[[i]] <- d %*% h[[i]]
   }
 
   list(dh = dh, dW = dW, db = db)
@@ -129,7 +129,7 @@ train <- function(nn, inp, k, eta = .01, mb = 10, nstep = 10000) {
     grads <- c() # shall I use matrix calculation for this?
 
     # Loop over each sampled data
-    for (i in 1:mb) { # use apply?
+    for (i in 1: mb) { # use apply?
 
       # Compute the network list
       nn <- forward(nn, sub_inp) # n data runs parallel ? No
