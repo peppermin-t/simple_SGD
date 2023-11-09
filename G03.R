@@ -24,7 +24,7 @@ netup <- function(d) {
     W[[i]] <- matrix(runif(d[i] * d[i + 1], 0, 0.2), d[i + 1], d[i])
 
     # And the offset vectors for each link is given by:
-    b[[i]] <- runif(d[i], 0, 0.2)
+    b[[i]] <- runif(d[i+1], 0, 0.2)
   }
 
   h[[n]] <- rep(0, d[n])
@@ -49,8 +49,14 @@ forward <- function(nn, inp) {
   h[[1]] <- inp
 
   # Loop over each remaining layer
-  for (i in range(1: (length(h) - 1))) {
-    h[[i + 1]] <- W[[i]] * h[[i]] + b[[i]]
+  for (i in 1:(length(h)-1)) {
+    
+    # Compute transformation to obtain node values
+    h[[i+1]] <- drop(W[[i]] %*% h[[i]] + b[[i]])
+    
+    # Set equal to zero if element is negative
+    h[[i+1]][which(h[[i+1]] < 0)] <- 0
+
   }
 
 
