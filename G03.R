@@ -1,5 +1,5 @@
-# Names and university usernames
-# githublink
+# Yinjia Chen (S2320995), Yiwen Xing (S2530703), Kai Wen Lian (S2593019)
+# https://github.com/peppermin-t/SGD.git
 # contribution
 
 # A function to build a list representing the network
@@ -74,32 +74,33 @@ backward <- function(nn, k) {
 
   l <- length(h)
 
-  # Compute the probability that the output variable is in class k
-  # ?When index of node is not equal to that at each iteration
+  # Compute the derivative of loss w.r.t. the node values (dh) at the last layer
   dh[[l]] <- exp(h[[l]]) / sum(exp(h[[l]]))
 
-  # ?When index of node is equal to that at each iteration
+  # When index of node is equal to k at each iteration, minus one from the output
   dh[[l]][k] <- dh[[l]][k] - 1
 
   ## Apply chain rule to compute derivatives of loss
-  # Loop over each layer from the last layer (back-propagation)
+  # Loop over each layer from the last layer (using back-propagation)
   for (i in (l - 1): 1) {
-    # Store the node values at each layer
+    
+    # Store the dh for (i+1)th layer
     d <- dh[[i + 1]]
 
     # Set to zero when node value is negative
     d[which(h[[i + 1]] <= 0)] <- 0
 
-    # Compute derivative w.r.t. the nodes (dh)
+    # Compute derivative w.r.t. the nodes, dh
     dh[[i]] <- t(W[[i]]) %*% d
 
-    # Compute derivative w.r.t. the offsets (db)
+    # Compute derivative w.r.t. the offsets, db
     db[[i]] <- d
 
-    # Compute derivative w.r.t. the weights (dW)
+    # Compute derivative w.r.t. the weights, dW
     dW[[i]] <- d %*% t(h[[i]])
   }
 
+  # Add derivatives to the network list
   c(nn, list(dh = dh, dW = dW, db = db))
 }
 
@@ -109,6 +110,7 @@ backward <- function(nn, k) {
 # mb (number of randomly sampled data to compute gradient),
 # nstep (number of optimization steps to take)
 train <- function(nn, inp, k, eta = .01, mb = 10, nstep = 10000) {
+  
   # Obtain the number of train data
   n <- length(k)
 
@@ -120,6 +122,7 @@ train <- function(nn, inp, k, eta = .01, mb = 10, nstep = 10000) {
 
   # Loop over each step
   for (i in 1: nstep) {
+    
     # Determine the index of data used for gradient calculation
     iid <- sample(n, mb)
 
@@ -135,11 +138,13 @@ train <- function(nn, inp, k, eta = .01, mb = 10, nstep = 10000) {
     # Initialise gradients
     grads_W <- grads_b <- list()
 
-    # Obtain the size of each layer
+    # Obtain the dimension of each layer
     d <- sapply(nn$h, length)
 
+    # Loop over each layer until the second last layer
     for (i in 1: (l - 1)) {
-      # Then the weight matrix for each link is given by:
+      
+      # The weight matrix for each link is given by:
       grads_W[[i]] <- matrix(rep(0, d[i] * d[i + 1]), d[i + 1], d[i])
 
       # And the offset vectors for each link is given by:
@@ -147,10 +152,10 @@ train <- function(nn, inp, k, eta = .01, mb = 10, nstep = 10000) {
     }
 
     # Loop over each sampled data
-    for (i in 1: mb) { # use apply?
+    for (i in 1: mb) { 
 
       # Forward the input data into the network and get the nn updated with h
-      nn <- forward(nn, sub_inp[i, ]) # n data runs parallel ? No
+      nn <- forward(nn, sub_inp[i, ]) 
 
       # Obtain the output vector form the updated nn
       output_h <- nn$h[[l]]
@@ -162,18 +167,25 @@ train <- function(nn, inp, k, eta = .01, mb = 10, nstep = 10000) {
       # Compute gradients with gradient descent
       grad <- backward(nn, sub_k[i])
 
+      # Loop over each layer until the second last layer again
       for (i in 1: (l - 1)) {
-        grads_W[[i]] <- grads_W[[i]] + grad$dW[[i]]  # n data runs parallel ? No
-        grads_b[[i]] <- grads_b[[i]] + grad$db[[i]]  # n data runs parallel ? No
+        
+        # Accumulate derivatives of weights in each layer and in each run
+        grads_W[[i]] <- grads_W[[i]] + grad$dW[[i]]
+        
+        # Accumulate derivatives of offset parameters in each layer and in each run
+        grads_b[[i]] <- grads_b[[i]] + grad$db[[i]]
       }
     }
-    losses <- c(losses, - mean(scores))
+    #! losses <- c(losses, - mean(scores))
 
+    # Compute the average of all derivatives obtained
     grad_W <- sapply(grads_W, function(x) x / mb)
     grad_b <- sapply(grads_b, function(x) x / mb)
 
     # Loop over each layer
     for (i in 1: (l - 1)) {
+      
       # Update weight parameters (W)
       nn$W[[i]] <- nn$W[[i]] - eta * grad_W[[i]]
 
@@ -182,10 +194,10 @@ train <- function(nn, inp, k, eta = .01, mb = 10, nstep = 10000) {
     }
   }
 
-  # # plotting loss against step, only for recording
-  # xs <- seq(1, nstep, by=5)
-  # ys <- losses[xs]
-  # plot(xs, ys, col="yellow", pch=20)
+  #! # plotting loss against step, only for recording
+  #! xs <- seq(1, nstep, by=5)
+  #! ys <- losses[xs]
+  #! plot(xs, ys, col="yellow", pch=20)
   
   nn
 }
@@ -196,6 +208,7 @@ train <- function(nn, inp, k, eta = .01, mb = 10, nstep = 10000) {
 # Input:nn (a list of network returned from forward()),
 # inp (a matrix of input data), k (a vector of labels).
 test <- function(nn, inp, k) {
+  
   # Compute number of labels
   n <- length(k)
 
@@ -207,9 +220,10 @@ test <- function(nn, inp, k) {
 
   # Loop over each output class / label
   for (i in 1: n) {
+    
     # Extract node values using transformation (ReLU)
     output_h <- forward(nn, inp[i, ])$h[[l]]
-    # print(output_h)
+    #! print(output_h)
 
     # Compute the probability that the output variable is
     #   labelled k / in output class k
@@ -228,27 +242,41 @@ test <- function(nn, inp, k) {
   mis_class / n
 }
 
-# set.seed(57) # training has worked
+set.seed(13) # training has worked
 
 # Aim: Train a network to classify irises to species based on given features
 # Define the dimensions of the neural network
 d <- c(4, 8, 7, 3)
 
-# data preparation
+# Data preparation
+
+# Extract the features of iris to be considered
 features <- colnames(iris)[1: 4]
+
+# Create label based on their species
 label <- colnames(iris)[5]
+
+# Determine number of label types
 label_options <- unique(iris[, 5])
 
+# Create initial values for network input (in the form of matrix)
 inp <- as.matrix(iris[, features])
+
+# Create corresponding labels k (shown by integers)
 k <- as.integer(factor(iris[, label], level = label_options))
 
 ## Divide data into test data and training data
 # Test data contains every 5th row of iris dataset
 test_iid <- seq(5, nrow(iris), by = 5)
 
+# Determine which is used for training data
 inp_train <- inp[-test_iid, ]
+# Extract the corresponding labels for training data
 k_train <- k[-test_iid]
+
+# Determine which is used for test data
 inp_test <- inp[test_iid, ]
+# Extract the corresponding labels for test data
 k_test <- k[test_iid]
 
 # Create a network based on the dimensions defined
@@ -262,5 +290,3 @@ system.time(nn <- train(nn, inp_train, k_train, eta=.01, mb=10, nstep=10000))
 # ?? plot
 system.time(mis_class_rate <- test(nn, inp_test, k_test))
 print(mis_class_rate)
-
-# do grad need to return W h b?
