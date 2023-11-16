@@ -83,7 +83,7 @@ backward <- function(nn, k) {
   ## Apply chain rule to compute derivatives of loss
   # Loop over each layer from the last layer (using back-propagation)
   for (i in (l - 1): 1) {
-    
+
     # Store the dh for (i+1)th layer
     d <- dh[[i + 1]]
 
@@ -117,9 +117,6 @@ train <- function(nn, inp, k, eta = .01, mb = 10, nstep = 10000) {
   # Obtain the number of layers for the network
   l <- length(nn$h)
 
-  # losses for each batch in a step, only for recording
-  losses <- c()
-
   # Loop over each step
   for (i in 1: nstep) {
     
@@ -143,7 +140,7 @@ train <- function(nn, inp, k, eta = .01, mb = 10, nstep = 10000) {
 
     # Loop over each layer until the second last layer
     for (i in 1: (l - 1)) {
-      
+
       # The weight matrix for each link is given by:
       grads_W[[i]] <- matrix(rep(0, d[i] * d[i + 1]), d[i + 1], d[i])
 
@@ -169,15 +166,14 @@ train <- function(nn, inp, k, eta = .01, mb = 10, nstep = 10000) {
 
       # Loop over each layer until the second last layer again
       for (i in 1: (l - 1)) {
-        
+
         # Accumulate derivatives of weights in each layer and in each run
         grads_W[[i]] <- grads_W[[i]] + grad$dW[[i]]
-        
+
         # Accumulate derivatives of offset parameters in each layer and in each run
         grads_b[[i]] <- grads_b[[i]] + grad$db[[i]]
       }
     }
-    #! losses <- c(losses, - mean(scores))
 
     # Compute the average of all derivatives obtained
     grad_W <- sapply(grads_W, function(x) x / mb)
@@ -185,7 +181,7 @@ train <- function(nn, inp, k, eta = .01, mb = 10, nstep = 10000) {
 
     # Loop over each layer
     for (i in 1: (l - 1)) {
-      
+
       # Update weight parameters (W)
       nn$W[[i]] <- nn$W[[i]] - eta * grad_W[[i]]
 
@@ -194,11 +190,6 @@ train <- function(nn, inp, k, eta = .01, mb = 10, nstep = 10000) {
     }
   }
 
-  #! # plotting loss against step, only for recording
-  #! xs <- seq(1, nstep, by=5)
-  #! ys <- losses[xs]
-  #! plot(xs, ys, col="yellow", pch=20)
-  
   nn
 }
 
@@ -220,10 +211,9 @@ test <- function(nn, inp, k) {
 
   # Loop over each output class / label
   for (i in 1: n) {
-    
+
     # Extract node values using transformation (ReLU)
     output_h <- forward(nn, inp[i, ])$h[[l]]
-    #! print(output_h)
 
     # Compute the probability that the output variable is
     #   labelled k / in output class k
@@ -287,6 +277,5 @@ system.time(nn <- train(nn, inp_train, k_train, eta=.01, mb=10, nstep=10000))
 
 # Classify test data to species according to the class predicted
 #  and compute misclassification rate
-# ?? plot
 system.time(mis_class_rate <- test(nn, inp_test, k_test))
 print(mis_class_rate)
