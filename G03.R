@@ -1,11 +1,56 @@
-# Yinjia Chen (S2320995), Yiwen Xing (S2530703), Kai Wen Lian (S2593019)
-# https://github.com/peppermin-t/SGD.git
-# contribution
+# Yinjia Chen (S2520995), Yiwen Xing (S2530703), Kai Wen Lian (S2593019)
 
-# A function to build a list representing the network
+# https://github.com/peppermin-t/SGD.git
+
+# Joint contribution: Go through the initial plan of the code
+# Yinjia Chen: Main developer and validator of codes
+# Kai Wen Lian: Sub developer of codes, comment codes
+# Yiwen Xing: Sub developer of codes, verify codes, add additional comment.
+
+##############################
+##############################
+
+# Brief Description:
+
+# This R code contains functions to create and train a neural network for
+# classification using stochastic gradient descent.
+
+# 1. 'netup' function: Initializes a neural network with random weights and
+# biases. It takes the number of nodes in each layer as input and returns a
+# list of initialized parameters.
+
+# 2. 'forward' function: Implements the forward propagation in the neural
+# network. It updates the node values in each layer based on input data and
+# returns the updated network.
+
+# 3. 'backward' function: Performs backward propagation. It computes the
+# derivatives of the loss function with respect to the weights, biases, and
+# node values, facilitating the learning process.
+
+# 4. 'train' function: Trains the neural network using forward and
+# backward propagation. It iteratively updates the network's parameters based
+# on the gradient of the loss function calculated from a subset of the training
+# data.
+
+# 5. 'test' function: Tests the trained network on a separate dataset to
+# evaluate its performance, specifically the misclassification rate.
+
+# The script also includes a practical implementation where it trains a neural
+# network to classify iris flowers into species based on four features. The
+# dataset is split into training and testing sets, with the network's
+# performance evaluated by its misclassification rate on the test set.
+
+##############################
+##############################
+
+
+# netup is a function to build a list representing the network
 # Input: d (a vector giving the number of nodes in each layer of a network)
+# Output: An initialised network list containing  a list for each h (empty
+# nodes for each layer), w (weight matrices), b (offset vectors)
 
 netup <- function(d) {
+
   # Number of layers
   n <- length(d)
 
@@ -17,8 +62,9 @@ netup <- function(d) {
     # Create a list of nodes for each layer (h)
     h[[i]] <- rep(0, d[i])
 
-    # Define dimensions for each link which is given by the number of nodes
-    # in current layer (d[i+1]) and that in the previous layer (d[i])
+    # Dimensions for each transformation matrix and offset which is
+    # given by the number of nodes in current layer (d[i+1])
+    # and that in the previous layer (d[i])
 
     # Then the weight matrix for each link is given by:
     W[[i]] <- matrix(runif(d[i] * d[i + 1], 0, 0.2), d[i + 1], d[i])
@@ -27,16 +73,17 @@ netup <- function(d) {
     b[[i]] <- runif(d[i + 1], 0, 0.2)
   }
 
+  # Create the list of nodes for the last layer (h_L)
   h[[n]] <- rep(0, d[n])
 
   list(h = h, W = W, b = b)
 }
 
-# A function to return an updated network list
+# forward is a function to calculate node values in each remaining layers
 # Input: nn (a list of network returned from netup()) and
 # inp (a vector of input values for the first layer)
-# !! calculate remaining node values given inp
-# !! test inp <- rnorm(d[1])
+# Output: An updated network list, with node values for h
+
 forward <- function(nn, inp) {
   W <- nn$W
   b <- nn$b
@@ -45,14 +92,13 @@ forward <- function(nn, inp) {
   # Obtain the number of layers in nn
   l <- length(h)
 
-  # Use eq(1)
   # Store values for the first layer
   h[[1]] <- inp
 
   # Loop over each remaining layer
   for (i in 1: (l - 1)) {
     # Compute transformation to obtain node values and
-    #   set equal to zero if element is negative
+    #   set equal to zero if element is negative (ReLU)
     h[[i + 1]] <- pmax(drop(W[[i]] %*% h[[i]] + b[[i]]), 0)
   }
 
@@ -60,9 +106,12 @@ forward <- function(nn, inp) {
 }
 
 
-# A function to compute the derivatives of the loss for a network
+# backward is a function to compute the derivatives of the loss for a network
 # Input: nn (a list of network returned from forward()) and
 #   k (the real output label k for this run)
+# Output: An updated network list, containing additional lists for each
+# derivative of loss
+
 backward <- function(nn, k) {
 
   # Obtain values of the neural network
@@ -77,14 +126,14 @@ backward <- function(nn, k) {
   # Compute the derivative of loss w.r.t. the node values (dh) at the last layer
   dh[[l]] <- exp(h[[l]]) / sum(exp(h[[l]]))
 
-  # When index of node is equal to k at each iteration, minus one from the output
+  # When index of node is equal to k at each iteration, minus one from output
   dh[[l]][k] <- dh[[l]][k] - 1
 
   ## Apply chain rule to compute derivatives of loss
   # Loop over each layer from the last layer (using back-propagation)
   for (i in (l - 1): 1) {
 
-    # Store the dh for (i+1)th layer
+    # Store the dh for (i + 1)th layer in d
     d <- dh[[i + 1]]
 
     # Set to zero when node value is negative
@@ -105,12 +154,15 @@ backward <- function(nn, k) {
 }
 
 
-# A function to train the network given input data and labels
-# Input: inp (a matrix of input data), k (a vector of labels), eta (step size),
-# mb (number of randomly sampled data to compute gradient),
+# train is a function to train the network given input data and labels
+# Input: inp (a matrix of input data), k (a vector of labels),
+# eta (learning rate), mb (batch size, randomly sampled data number to
+# compute gradient for one step optimization),
 # nstep (number of optimization steps to take)
+# Output: A trained network list
+
 train <- function(nn, inp, k, eta = .01, mb = 10, nstep = 10000) {
-  
+
   # Obtain the number of train data
   n <- length(k)
 
@@ -119,7 +171,7 @@ train <- function(nn, inp, k, eta = .01, mb = 10, nstep = 10000) {
 
   # Loop over each step
   for (i in 1: nstep) {
-    
+
     # Determine the index of data used for gradient calculation
     iid <- sample(n, mb)
 
@@ -129,64 +181,28 @@ train <- function(nn, inp, k, eta = .01, mb = 10, nstep = 10000) {
     # Extract its corresponding labels
     sub_k <- k[iid]
 
-    # scores for each run in a batch, only for recording
-    scores <- c()
-
-    # Initialise gradients
-    grads_W <- grads_b <- list()
-
-    # Obtain the dimension of each layer
-    d <- sapply(nn$h, length)
-
-    # Loop over each layer until the second last layer
-    for (i in 1: (l - 1)) {
-
-      # The weight matrix for each link is given by:
-      grads_W[[i]] <- matrix(rep(0, d[i] * d[i + 1]), d[i + 1], d[i])
-
-      # And the offset vectors for each link is given by:
-      grads_b[[i]] <- rep(0, d[i + 1])
-    }
-
     # Loop over each sampled data
-    for (i in 1: mb) { 
+    for (i in 1: mb) {
 
-      # Forward the input data into the network and get the nn updated with h
-      nn <- forward(nn, sub_inp[i, ]) 
-
-      # Obtain the output vector form the updated nn
-      output_h <- nn$h[[l]]
-
-      # Compute the probability that the output variable is
-      #   labelled k / in output class k
-      scores <- c(scores, log(exp(output_h[sub_k[i]]) / sum(exp(output_h))))
+      # Forward the input data into the network and get the nn with h updated
+      nn <- forward(nn, sub_inp[i, ])
 
       # Compute gradients with gradient descent
       grad <- backward(nn, sub_k[i])
 
-      # Loop over each layer until the second last layer again
+      # Loop over each layer until the second last layer
       for (i in 1: (l - 1)) {
 
-        # Accumulate derivatives of weights in each layer and in each run
-        grads_W[[i]] <- grads_W[[i]] + grad$dW[[i]]
+        # Update weight parameters with the the gradient of weights this run
+        # with an importance of 1 / mb, in the end updating them with the mean
+        # of gradients after mb runs
+        nn$W[[i]] <- nn$W[[i]] - eta * grad$dW[[i]] / mb
 
-        # Accumulate derivatives of offset parameters in each layer and in each run
-        grads_b[[i]] <- grads_b[[i]] + grad$db[[i]]
+        # Update offset parameters with the the gradient of offsets this run
+        # with an importance of 1 / mb, in the end updating them with the mean
+        # of gradients after mb runs
+        nn$b[[i]] <- nn$b[[i]] - eta * grad$db[[i]] / mb
       }
-    }
-
-    # Compute the average of all derivatives obtained
-    grad_W <- sapply(grads_W, function(x) x / mb)
-    grad_b <- sapply(grads_b, function(x) x / mb)
-
-    # Loop over each layer
-    for (i in 1: (l - 1)) {
-
-      # Update weight parameters (W)
-      nn$W[[i]] <- nn$W[[i]] - eta * grad_W[[i]]
-
-      # Update offset parameters (b)
-      nn$b[[i]] <- nn$b[[i]] - eta * grad_b[[i]]
     }
   }
 
@@ -194,13 +210,15 @@ train <- function(nn, inp, k, eta = .01, mb = 10, nstep = 10000) {
 }
 
 
-# A function to train a network to classify items to groups based on a given
-# output class k
-# Input:nn (a list of network returned from forward()),
+# test is a function to train a network to classify items to groups based on a
+# given output class k
+# Input: nn (a list of network returned from forward()),
 # inp (a matrix of input data), k (a vector of labels).
+# Output: Rate of misclassification
+
 test <- function(nn, inp, k) {
-  
-  # Compute number of labels
+
+  # Compute number of test data
   n <- length(k)
 
   # Compute number of layers
@@ -209,26 +227,25 @@ test <- function(nn, inp, k) {
   # Initialise number of misclassificated data
   mis_class <- 0
 
-  # Loop over each output class / label
+  # Loop over the test data
   for (i in 1: n) {
 
-    # Extract node values using transformation (ReLU)
+    # Forward the input data into the network and get the output layer values
     output_h <- forward(nn, inp[i, ])$h[[l]]
 
-    # Compute the probability that the output variable is
-    #   labelled k / in output class k
+    # Compute the probability that the input data is
+    #   labelled with each output class
     scores <- exp(output_h) / sum(exp(output_h))
 
-    # Find the most frequently appeared probability
+    # Find the output class with the highest scores (largest probability)
     k_ <- which(scores == max(scores))
 
-    # Count the misclassified data; occur when output is not the maximum
-    if (k_ != k[i]) {
-      mis_class <- mis_class + 1
-    }
+    # Count the misclassified data; occur when the predicted class is not
+    # the real one
+    mis_class <- mis_class + (k_ != k[i])
   }
 
-  # Compute the probability of loss
+  # Compute the misclassification rate
   mis_class / n
 }
 
@@ -238,21 +255,21 @@ set.seed(13) # training has worked
 # Define the dimensions of the neural network
 d <- c(4, 8, 7, 3)
 
-# Data preparation
+## Data preparation
 
 # Extract the features of iris to be considered
 features <- colnames(iris)[1: 4]
 
-# Create label based on their species
+# Extract the label based on their species
 label <- colnames(iris)[5]
 
-# Determine number of label types
+# Extract unique label types in the dataset
 label_options <- unique(iris[, 5])
 
-# Create initial values for network input (in the form of matrix)
+# Extract input data of the network (a matrix)
 inp <- as.matrix(iris[, features])
 
-# Create corresponding labels k (shown by integers)
+# Extract corresponding output labels k (a integer vector)
 k <- as.integer(factor(iris[, label], level = label_options))
 
 ## Divide data into test data and training data
@@ -269,13 +286,16 @@ inp_test <- inp[test_iid, ]
 # Extract the corresponding labels for test data
 k_test <- k[test_iid]
 
+
+## Create and train a network
+
 # Create a network based on the dimensions defined
 nn <- netup(d)
 
-# train nn
-system.time(nn <- train(nn, inp_train, k_train, eta=.01, mb=10, nstep=10000))
+# Train the network nn
+nn <- train(nn, inp_train, k_train, eta=.01, mb=10, nstep=10000)
 
 # Classify test data to species according to the class predicted
-#  and compute misclassification rate
-system.time(mis_class_rate <- test(nn, inp_test, k_test))
+# and compute misclassification rate
+mis_class_rate <- test(nn, inp_test, k_test)
 print(mis_class_rate)
