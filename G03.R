@@ -232,12 +232,9 @@ test <- function(nn, inp, k) {
     # Forward the input data into the network and get the output layer values
     output_h <- forward(nn, inp[i, ])$h[[l]]
 
-    # Compute the probability that the input data is
-    #   labelled with each output class
-    scores <- exp(output_h) / sum(exp(output_h))
-
-    # Find the output class with the highest scores (largest probability)
-    k_ <- which(scores == max(scores))
+    # Find the output class with the largest output values, which is also
+    # the one with the largest score (largest probability) after normalizing
+    k_ <- which(output_h == max(output_h))
 
     # Count the misclassified data; occur when the predicted class is not
     # the real one
@@ -292,7 +289,7 @@ k_test <- k[test_iid]
 nn <- netup(d)
 
 # Train the network nn
-nn <- train(nn, inp_train, k_train, eta=.01, mb=10, nstep=10000)
+system.time(nn <- train(nn, inp_train, k_train, eta=.01, mb=10, nstep=10000))
 
 # Classify test data to species according to the class predicted
 # and compute misclassification rate
