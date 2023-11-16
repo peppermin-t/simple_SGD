@@ -17,20 +17,19 @@
 
 # 1. 'netup' function: Initializes a neural network with random weights and 
 # biases. It takes the number of nodes in each layer as input and returns a 
-# list of initialized parameters.
+# list of initialized parameters and empty nodes.
 
 # 2. 'forward' function: Implements the forward propagation in the neural 
-# network. It updates the node values in each layer based on input data and 
-# returns the updated network.
+# network. It updates the node values in each layer based on input data for the 
+# first layer and returns the updated network.
 
 # 3. 'backward' function: Performs backward propagation. It computes the 
 # derivatives of the loss function with respect to the weights, biases, and 
 # node values, facilitating the learning process.
 
-# 4. 'train' function;  function: Trains the neural network using forward and 
-# backward propagation. It iteratively updates the network's parameters based 
-# on the gradient of the loss function calculated from a subset of the training 
-# data.
+# 4. 'train' function: Trains the neural network using forward and backward 
+# propagation. It iteratively updates the network's parameters based on the 
+# gradient of the loss function calculated from a subset of the training data.
 
 # 5. 'test' function: Tests the trained network on a separate dataset to 
 # evaluate its performance, specifically the misclassification rate.
@@ -46,7 +45,7 @@
 
 # netup is a function to build a list representing the network
 # Input: d (a vector giving the number of nodes in each layer of a network)
-# Output: An initialised network list containing  a list for each h (empty nodes 
+# Output: An initialised network list containing a list for each h (empty nodes 
 # for each layer), w (weight matrices), b (offset vectors)
 
 netup <- function(d) {
@@ -57,8 +56,9 @@ netup <- function(d) {
   # Initialise a list to store the weight matrices (W) and offset vectors (b)
   h <- W <- b <- list()
   
-  # Loop over the layers from 1 to n-1
+  # Loop over the layers from the 1st to (n-1)th
   for (i in 1: (n - 1)) {
+    
     # Create a list of nodes for each layer (h)
     h[[i]] <- rep(0, d[i])
     
@@ -90,7 +90,6 @@ forward <- function(nn, inp) {
   # Obtain the number of layers in nn
   l <- length(h)
   
-  # Use eq(1)
   # Store values for the first layer
   h[[1]] <- inp
   
@@ -262,10 +261,10 @@ test <- function(nn, inp, k) {
   # Compute number of layers
   l <- length(nn$h)
   
-  # Initialise number of misclassificated data
+  # Initialise the number of misclassified data
   mis_class <- 0
   
-  # Loop over each output class / label
+  # Loop over each input data (inp)
   for (i in 1: n) {
     
     # Extract node values using transformation (ReLU)
@@ -279,13 +278,12 @@ test <- function(nn, inp, k) {
     k_ <- which(scores == max(scores))
     
     # Count the misclassified data; occur when output is not the maximum
-    if (k_ != k[i]) {
-      mis_class <- mis_class + 1
-    }
+    mis_class <- sum(k_ != k[i])
   }
   
   # Compute the probability of loss
   mis_class / n
+
 }
 
 set.seed(13) # training has worked
