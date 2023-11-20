@@ -84,24 +84,21 @@ netup <- function(d) {
 # Output: An updated network list, with node values for h
 
 forward <- function(nn, inp) {
-  W <- nn$W
-  b <- nn$b
-  h <- nn$h
 
   # Obtain the number of layers in nn
-  l <- length(h)
+  l <- length(nn$h)
 
   # Store values for the first layer
-  h[[1]] <- inp
+  nn$h[[1]] <- inp
 
   # Loop over each remaining layer
   for (i in 1: (l - 1)) {
     # Compute transformation to obtain node values and
     #   set equal to zero if element is negative (ReLU)
-    h[[i + 1]] <- pmax(drop(W[[i]] %*% h[[i]] + b[[i]]), 0)
+    nn$h[[i + 1]] <- pmax(drop(nn$W[[i]] %*% nn$h[[i]] + nn$b[[i]]), 0)
   }
 
-  list(h = h, W = W, b = b)
+  nn
 }
 
 
@@ -113,17 +110,13 @@ forward <- function(nn, inp) {
 
 backward <- function(nn, k) {
 
-  # Obtain values of the neural network
-  W <- nn$W
-  h <- nn$h
-
   # Create empty lists for derivatives
   dh <- dW <- db <- list()
 
-  l <- length(h)
+  l <- length(nn$h)
 
   # Compute the derivative of loss w.r.t. the node values (dh) at the last layer
-  dh[[l]] <- exp(h[[l]]) / sum(exp(h[[l]]))
+  dh[[l]] <- exp(nn$h[[l]]) / sum(exp(nn$h[[l]]))
 
   # When index of node is equal to k at each iteration, minus one from output
   dh[[l]][k] <- dh[[l]][k] - 1
@@ -136,16 +129,16 @@ backward <- function(nn, k) {
     d <- dh[[i + 1]]
 
     # Set to zero when node value is negative
-    d[which(h[[i + 1]] <= 0)] <- 0
+    d[which(nn$h[[i + 1]] <= 0)] <- 0
 
     # Compute derivative w.r.t. the nodes, dh
-    dh[[i]] <- t(W[[i]]) %*% d
+    dh[[i]] <- t(nn$W[[i]]) %*% d
 
     # Compute derivative w.r.t. the offsets, db
     db[[i]] <- d
 
     # Compute derivative w.r.t. the weights, dW
-    dW[[i]] <- d %*% t(h[[i]])
+    dW[[i]] <- d %*% t(nn$h[[i]])
   }
 
   # Add derivatives to the network list
@@ -245,7 +238,9 @@ test <- function(nn, inp, k) {
   mis_class / n
 }
 
-set.seed(13) # training has worked
+# set.seed(13) # training has worked
+seed <- commandArgs(trailingOnly = TRUE)[1]
+set.seed(seed)
 
 # Aim: Train a network to classify irises to species based on given features
 # Define the dimensions of the neural network
@@ -295,3 +290,13 @@ system.time(nn <- train(nn, inp_train, k_train, eta=.01, mb=10, nstep=10000))
 # and compute misclassification rate
 mis_class_rate <- test(nn, inp_test, k_test)
 print(mis_class_rate)
+
+# Grade (16/18)
+
+# Instructor's note:
+# Nicely commented, easy to follow code. Does what it is supposed to do.
+
+# The only deficiency was that there is quite a lot of unnecessary copying and
+#   list creation, which I think is probably responsible for the slightly slow
+#   speed. e.g. in 'forward' you could just modify 'nn' directly and return the
+#   modified list as the return object.
