@@ -173,6 +173,17 @@ train <- function(nn, inp, k, eta = .01, mb = 10, nstep = 10000) {
     # Extract its corresponding labels
     sub_k <- k[iid]
 
+    # initialize the summing-up storage of weights and offsets
+    grads_W <- grads_b <- list()
+    d <- sapply(nn$h, length)
+    for (i in 1: (l - 1)) {
+      # The weight matrix for each link is given by:
+      grads_W[[i]] <- matrix(rep(0, d[i] * d[i + 1]), d[i + 1], d[i])
+
+      # And the offset vectors for each link is given by:
+      grads_b[[i]] <- rep(0, d[i + 1])
+    }
+
     # Loop over each sampled data
     for (i in 1: mb) {
 
@@ -186,15 +197,21 @@ train <- function(nn, inp, k, eta = .01, mb = 10, nstep = 10000) {
       for (i in 1: (l - 1)) {
 
         # Update weight parameters with the the gradient of weights this run
-        # with an importance of 1 / mb, in the end updating them with the mean
-        # of gradients after mb runs
-        nn$W[[i]] <- nn$W[[i]] - eta * grad$dW[[i]] / mb
+        grads_W[[i]] <- grads_W[[i]] + grad$dW[[i]]
 
         # Update offset parameters with the the gradient of offsets this run
-        # with an importance of 1 / mb, in the end updating them with the mean
-        # of gradients after mb runs
-        nn$b[[i]] <- nn$b[[i]] - eta * grad$db[[i]] / mb
+        grads_b[[i]] <- grads_b[[i]] + grad$db[[i]]
       }
+    }
+
+    # Loop over each layer until the second last layer
+    for (i in 1: (l - 1)) {
+
+      # Update weight parameters (W) with corresponding means
+      nn$W[[i]] <- nn$W[[i]] - eta * grads_W[[i]] / mb
+
+      # Update offset parameters (b) with corresponding means
+      nn$b[[i]] <- nn$b[[i]] - eta * grads_b[[i]] / mb
     }
   }
 
